@@ -174,6 +174,22 @@ nav button.active{background:#38bdf8;color:#0a0f1e;border-color:#38bdf8}
 .tip-title{font-weight:800;font-size:15px;margin-bottom:4px}
 .tip-text{font-size:13px;line-height:1.6;color:var(--text2)}
 
+/* ── GIF POPUP ── */
+#gif-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+#gif-overlay.open{display:flex}
+#gif-modal{background:var(--card);border-radius:20px;padding:20px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.6);animation:popIn .25s ease}
+@keyframes popIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+#gif-modal-title{font-size:18px;font-weight:800;margin-bottom:4px;padding-right:32px}
+#gif-modal-target{font-size:12px;font-family:'DM Mono',monospace;margin-bottom:12px}
+#gif-modal-close{position:absolute;top:16px;right:16px;background:var(--card2);border:1px solid var(--border);border-radius:50%;width:32px;height:32px;font-size:18px;cursor:pointer;color:var(--muted);display:flex;align-items:center;justify-content:center;line-height:1}
+#gif-modal .gif-wrap{width:100%;border-radius:12px;overflow:hidden;background:var(--card2);margin-bottom:12px;min-height:180px;display:flex;align-items:center;justify-content:center;position:relative}
+#gif-modal .gif-wrap img{width:100%;display:block;border-radius:12px}
+#gif-modal .gif-loading{position:absolute;color:var(--muted);font-size:13px}
+#gif-modal-desc{font-size:13px;line-height:1.7;color:var(--text2);background:var(--card2);border-radius:10px;padding:10px 13px}
+/* GIF trigger button on exercise */
+.gif-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 9px;font-size:13px;cursor:pointer;color:var(--muted);transition:all .2s;flex-shrink:0;margin-left:auto;white-space:nowrap;line-height:1.4}
+.gif-btn:hover{border-color:#38bdf8;color:#38bdf8;background:#38bdf811}
+
 /* ── INSTALL BANNER ── */
 #install-banner{display:none;background:var(--card);border:1px solid #38bdf8;border-radius:12px;padding:12px 14px;margin-bottom:14px;align-items:center;gap:10px}
 #install-banner.show{display:flex}
@@ -275,10 +291,46 @@ nav button.active{background:#38bdf8;color:#0a0f1e;border-color:#38bdf8}
   </div>
 </div>
 
+<!-- GIF POPUP MODAL -->
+<div id="gif-overlay" onclick="closeGif()">
+  <div id="gif-modal" onclick="event.stopPropagation()" style="position:relative">
+    <button id="gif-modal-close" onclick="closeGif()">✕</button>
+    <div id="gif-modal-title"></div>
+    <div id="gif-modal-target"></div>
+    <div class="gif-wrap">
+      <span class="gif-loading" id="gif-loading">Loading…</span>
+      <img id="gif-img" src="" alt="" style="display:none" onload="gifLoaded()" onerror="gifError()"/>
+    </div>
+    <div id="gif-modal-desc"></div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════════
 // WORKOUT DATA
 // ══════════════════════════════════════════
+// ── EXERCISE GIF MAP ──
+const GIFS = {
+  "Wall Push-Ups":              { gif:"https://media.giphy.com/media/3o7TKtnuHOHHUjR38Y/giphy.gif",    alt:"https://www.inspireusafoundation.org/wp-content/uploads/2023/03/wall-push-up.gif",          desc:"Stand arm's length from wall. Palms flat, body straight. Lower chest to wall and push back." },
+  "Shoulder Taps (Plank)":      { gif:"https://media.giphy.com/media/l0HlHcuzAjhMQ8YSY/giphy.gif",    alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/11/plank-shoulder-tap.gif",    desc:"High plank. Lift one hand, tap opposite shoulder. Hips stay dead level — that's the whole challenge." },
+  "Standing Oblique Crunch":    { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/standing-oblique-crunch.gif", alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/standing-oblique-crunch.gif", desc:"Hands behind head. Drive elbow down toward same-side knee. Squeeze the oblique at the bottom." },
+  "Pike Push-Ups":              { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/11/pike-push-up.gif",           alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/11/pike-push-up.gif",           desc:"Hips high in an inverted V. Bend elbows to lower head toward floor between hands. Press back up." },
+  "Tricep Dips (Chair)":        { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/10/chair-tricep-dip.gif",       alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/10/chair-tricep-dip.gif",       desc:"Hands on chair edge. Slide off seat, lower body bending elbows to 90°, press back up." },
+  "Dead Bug":                   { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/dead-bug.gif",               alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/dead-bug.gif",               desc:"Lie on back, arms up, knees at 90°. Lower opposite arm and leg to floor. Keep lower back FLAT." },
+  "Bodyweight Squat":           { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/bodyweight-squat.gif",       alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/bodyweight-squat.gif",       desc:"Feet shoulder-width, toes slightly out. Sit back and down as if into a chair. Chest up throughout." },
+  "Reverse Lunge":              { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/reverse-lunge.gif",          alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/reverse-lunge.gif",          desc:"Step one foot straight back, lower back knee toward floor. Push through front heel to return." },
+  "Glute Bridge":               { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/glute-bridge.gif",           alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/glute-bridge.gif",           desc:"Lie on back, feet flat. Drive hips straight up squeezing glutes hard at top. Hold 2 seconds." },
+  "Step Touch Side-to-Side":    { gif:"https://media.giphy.com/media/3o7TKF1fSIs1R19B8k/giphy.gif",    alt:"https://media.giphy.com/media/3o7TKF1fSIs1R19B8k/giphy.gif",                               desc:"Step one foot wide to the side, tap the other foot to meet it. Repeat other side with a light rhythm." },
+  "March in Place (High Knees)":{ gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/03/high-knees.gif",             alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/03/high-knees.gif",             desc:"Lift knees to hip height alternately while pumping opposite arms. Go at a pace that raises heart rate." },
+  "Wall Sit":                   { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/wall-sit.gif",               alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/wall-sit.gif",               desc:"Back flat on wall, slide down until thighs are parallel to floor. Hold. Breathe through the burn." },
+  "Superman Hold":              { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/superman.gif",               alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/superman.gif",               desc:"Lie face down. Simultaneously lift chest, arms and legs off floor. Hold 3 seconds, lower slowly." },
+  "Table Row":                  { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/11/bodyweight-row.gif",         alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/11/bodyweight-row.gif",         desc:"Lie under sturdy table, grip the edge overhand. Pull chest up keeping body straight. Lower slowly." },
+  "Reverse Snow Angel":         { gif:"https://media.giphy.com/media/xUPGcFn7DBfpfj3HJe/giphy.gif",    alt:"https://media.giphy.com/media/xUPGcFn7DBfpfj3HJe/giphy.gif",                               desc:"Lie face down, arms by sides. Sweep arms wide and up overhead. Squeeze shoulder blades together." },
+  "Inchworm":                   { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/inchworm.gif",               alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/inchworm.gif",               desc:"Stand, fold forward, walk hands out to plank. Pause. Walk hands back to feet and stand up." },
+  "Squat to Calf Raise":        { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/bodyweight-squat.gif",       alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/bodyweight-squat.gif",       desc:"Do a squat. As you stand, continue rising up onto your toes at the top. Lower heels. One rep done." },
+  "Plank Hold":                 { gif:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/plank.gif",                  alt:"https://www.inspireusafoundation.org/wp-content/uploads/2022/01/plank.gif",                  desc:"Elbows under shoulders. Body in a straight line head to heels. Brace abs, squeeze glutes. Don't sag." },
+};
+
 const PLAN = {
   weeks: [
     { week:1, phase:"Phase 1 — Form & Habit", color:"#38bdf8" },
@@ -515,8 +567,11 @@ function renderDayPane(wKey, d) {
       html += `<div class="ex-card" style="--dc:${d.color}">
         <div class="ex-head">
           <div class="ex-num" style="background:${d.color}33;color:${d.color}">${ei+1}</div>
-          <div>
-            <div class="ex-name">${ex.name}</div>
+          <div style="flex:1">
+            <div style="display:flex;align-items:flex-start;gap:6px;margin-bottom:3px">
+              <div class="ex-name" style="flex:1">${ex.name}</div>
+              <button class="gif-btn" onclick="openGif('${ex.name.replace(/'/g,"\\'")}','${ex.target.replace(/'/g,"\\'")}','${d.color}')">▶ Demo</button>
+            </div>
             <div class="ex-target" style="color:${d.color}">🎯 ${ex.target}</div>
             <div class="ex-cue">💡 ${ex.cue}</div>
           </div>
@@ -812,6 +867,44 @@ function renderHistGrid_init() {
     </button>`).join('');
   renderHistContent();
 }
+
+// ══════════════════════════════════════════
+// GIF POPUP
+// ══════════════════════════════════════════
+let _gifAlt = "";
+function openGif(name, target, color) {
+  const info = GIFS[name] || { gif:"", alt:"", desc:"No demo available for this exercise." };
+  document.getElementById('gif-modal-title').textContent = name;
+  document.getElementById('gif-modal-title').style.color = color;
+  document.getElementById('gif-modal-target').textContent = "🎯 " + target;
+  document.getElementById('gif-modal-target').style.color = color;
+  document.getElementById('gif-modal-desc').textContent = info.desc;
+  _gifAlt = info.alt;
+  const img = document.getElementById('gif-img');
+  img.style.display = "none";
+  document.getElementById('gif-loading').style.display = "block";
+  img.src = info.gif;
+  document.getElementById('gif-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function gifLoaded() {
+  document.getElementById('gif-img').style.display = "block";
+  document.getElementById('gif-loading').style.display = "none";
+}
+function gifError() {
+  const img = document.getElementById('gif-img');
+  if (img.src !== _gifAlt && _gifAlt) {
+    img.src = _gifAlt; // try fallback
+  } else {
+    document.getElementById('gif-loading').textContent = "⚠️ GIF unavailable — see description below";
+  }
+}
+function closeGif() {
+  document.getElementById('gif-overlay').classList.remove('open');
+  document.getElementById('gif-img').src = "";
+  document.body.style.overflow = '';
+}
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeGif(); });
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
