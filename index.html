@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#0a0f1e"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Boot Camp"/>
+<meta name="description" content="8-Week Military Boot Camp Workout Tracker"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="icons/icon-192.png"/>
+<title>🪖 Boot Camp</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;600;700;800&display=swap');
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0f1e;--card:#111827;--border:#1e2d45;--text:#e2e8f0;--muted:#64748b;
+  --a:#38bdf8;--b:#34d399;--c:#818cf8;--warn:#fb923c;--danger:#f87171;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column}
+
+/* ── HEADER ── */
+#header{background:linear-gradient(135deg,#0f172a,#1a0f2e);border-bottom:1px solid var(--border);padding:16px 16px 0;flex-shrink:0}
+#header h1{font-size:20px;font-weight:800;margin-bottom:8px}
+.badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+.badge{background:var(--bc,#38bdf8)22;border:1px solid var(--bc,#38bdf8)55;color:var(--bc,#38bdf8);border-radius:20px;padding:2px 9px;font-size:10px;font-weight:600;font-family:'DM Mono',monospace}
+nav{display:flex;gap:3px;overflow-x:auto;padding-bottom:0}
+nav::-webkit-scrollbar{display:none}
+nav button{background:transparent;color:var(--muted);border:1px solid var(--border);border-bottom:none;border-radius:8px 8px 0 0;padding:8px 13px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0;transition:all .2s}
+nav button.active{background:var(--a);color:#0a0f1e;border-color:var(--a)}
+
+/* ── CONTENT ── */
+#content{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch}
+
+/* ── TABS ── */
+.tab{display:none}.tab.active{display:block}
+
+/* ── DAY SELECTOR ── */
+.day-grid{display:flex;gap:8px;margin-bottom:16px}
+.day-btn{flex:1;background:var(--card);border:2px solid var(--border);border-radius:12px;padding:12px 6px;cursor:pointer;text-align:center;transition:all .2s;font-family:'DM Sans',sans-serif}
+.day-btn.active{background:var(--dc)22;border-color:var(--dc)}
+.day-btn .ds{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.day-btn .dn{font-weight:800;font-size:14px;margin:2px 0}
+.day-btn .dl{color:var(--text);font-size:10px;margin-bottom:5px}
+.prog-bar-wrap{background:#1e2d45;border-radius:4px;height:3px;overflow:hidden;margin-top:2px}
+.prog-bar{height:100%;border-radius:4px;transition:width .3s}
+.prog-label{font-size:9px;margin-top:2px;font-family:'DM Mono',monospace}
+
+/* ── CARDS ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px}
+.day-card{border-width:2px}
+.section-label{font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+
+/* ── INFO BARS ── */
+.info-bar{background:#1e2d45;border-radius:9px;padding:9px 12px;margin-bottom:12px;font-size:11px;line-height:1.5}
+.info-bar .label{font-weight:700;margin-right:4px}
+
+/* ── CIRCUIT HEADER ── */
+.circuit-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.circuit-tag{border-radius:6px;padding:2px 10px;font-size:10px;font-weight:700;color:#0a0f1e}
+.circuit-sets{color:var(--muted);font-size:10px}
+
+/* ── EXERCISE CARD ── */
+.ex-card{background:#0a0f1e;border:1px solid var(--border);border-radius:11px;padding:12px;margin-bottom:8px}
+.ex-head{display:flex;gap:10px;margin-bottom:10px;align-items:flex-start}
+.ex-num{border-radius:7px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.ex-name{font-weight:700;font-size:13px;margin-bottom:2px}
+.ex-target{font-size:10px;font-family:'DM Mono',monospace;margin-bottom:3px}
+.ex-cue{color:var(--muted);font-size:10px;line-height:1.5}
+.rounds-label{font-size:9px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;border-top:1px solid var(--border);padding-top:9px;margin-bottom:7px}
+.rounds{display:flex;gap:6px}
+.round-col{flex:1;text-align:center}
+.round-lbl{font-size:9px;margin-bottom:4px;font-weight:600;transition:color .2s}
+.round-input{width:100%;background:#111827;border:1px solid var(--border);border-radius:7px;padding:8px 4px;color:var(--text);font-size:15px;font-family:'DM Mono',monospace;text-align:center;outline:none;transition:all .2s;-webkit-appearance:none}
+.round-input:focus{border-color:var(--dc,#38bdf8);background:#0f1a2e}
+.round-input.filled{border-color:var(--dc,#38bdf8);background:var(--dc,#38bdf8)15}
+
+/* ── SAVE BUTTON ── */
+.save-btn{width:100%;border:none;border-radius:12px;padding:14px;font-size:14px;font-weight:800;cursor:pointer;font-family:'DM Sans',sans-serif;letter-spacing:.04em;transition:all .3s;margin-top:4px}
+
+/* ── HISTORY ── */
+.hist-entry{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:12px}
+.hist-date{font-weight:700;font-size:14px;margin-bottom:12px}
+.hist-ex{background:#0a0f1e;border-radius:9px;padding:10px 12px;margin-bottom:6px}
+.hist-ex-name{font-weight:600;font-size:12px;margin-bottom:7px}
+.hist-rounds{display:flex;gap:6px}
+.hist-round{flex:1;text-align:center}
+.hist-rnd-lbl{font-size:9px;color:var(--muted);margin-bottom:3px}
+.hist-rnd-val{border-radius:7px;padding:6px 4px;font-size:13px;font-family:'DM Mono',monospace;border:1px solid var(--border)}
+
+/* ── PROGRESSION ── */
+.phase-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:14px}
+.week-cell{border-radius:9px;padding:9px 3px;text-align:center;border:1px solid var(--border)}
+.week-cell .wd{font-size:10px;font-weight:700}
+.week-cell .wl{font-size:9px;margin-top:2px}
+
+/* ── TIPS ── */
+.tip-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:9px;display:flex;gap:10px;align-items:flex-start}
+.tip-icon{font-size:20px;flex-shrink:0}
+.tip-title{font-weight:700;font-size:13px;margin-bottom:3px}
+.tip-text{font-size:12px;line-height:1.6;color:var(--text)}
+
+/* ── INSTALL BANNER ── */
+#install-banner{display:none;background:linear-gradient(90deg,#1e1b4b,#0f2d45);border:1px solid var(--a);border-radius:12px;padding:12px 14px;margin-bottom:14px;align-items:center;gap:10px}
+#install-banner.show{display:flex}
+#install-banner p{font-size:12px;flex:1;line-height:1.5}
+#install-banner strong{color:var(--a)}
+#install-btn{background:var(--a);color:#0a0f1e;border:none;border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'DM Sans',sans-serif}
+#dismiss-btn{background:transparent;border:none;color:var(--muted);font-size:18px;cursor:pointer;flex-shrink:0}
+
+/* ── EMPTY STATE ── */
+.empty{background:var(--card);border:1px dashed var(--border);border-radius:12px;padding:24px;text-align:center;color:var(--muted);font-size:12px;line-height:1.8}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div id="header">
+  <h1>🪖 8-Week Boot Camp</h1>
+  <div class="badges">
+    <span class="badge" style="--bc:#38bdf8">Beginner</span>
+    <span class="badge" style="--bc:#34d399">Bodyweight</span>
+    <span class="badge" style="--bc:#818cf8">3×/week</span>
+    <span class="badge" style="--bc:#fb923c">20–25 min</span>
+    <span class="badge" style="--bc:#f472b6">Fat Loss + Muscle</span>
+  </div>
+  <nav>
+    <button class="active" onclick="showTab('plan')">💪 Workout</button>
+    <button onclick="showTab('history')">📊 History</button>
+    <button onclick="showTab('progression')">📈 Progress</button>
+    <button onclick="showTab('tips')">🥗 Tips</button>
+  </nav>
+</div>
+
+<!-- CONTENT -->
+<div id="content">
+
+  <!-- Install Banner -->
+  <div id="install-banner">
+    <span style="font-size:24px">📲</span>
+    <p><strong>Add to Home Screen</strong><br>Tap below to install this app on your Android phone — works offline!</p>
+    <button id="install-btn" onclick="installApp()">Install</button>
+    <button id="dismiss-btn" onclick="dismissBanner()">✕</button>
+  </div>
+
+  <!-- PLAN TAB -->
+  <div class="tab active" id="tab-plan">
+    <div class="section-label">Select Training Day · <span id="today-label"></span></div>
+    <div class="day-grid" id="day-grid"></div>
+    <div id="day-detail"></div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div class="tab" id="tab-history">
+    <div class="section-label">View past sessions</div>
+    <div class="day-grid" id="hist-day-grid"></div>
+    <div id="hist-content"></div>
+  </div>
+
+  <!-- PROGRESSION TAB -->
+  <div class="tab" id="tab-progression">
+    <p style="color:var(--muted);font-size:12px;line-height:1.7;margin-bottom:16px">Each phase builds on the last — same exercises, progressively harder. This is how real strength is built.</p>
+    <div id="phases"></div>
+    <div class="section-label" style="margin-top:20px">Weekly Schedule</div>
+    <div class="week-grid" id="week-grid"></div>
+  </div>
+
+  <!-- TIPS TAB -->
+  <div class="tab" id="tab-tips">
+    <p style="color:var(--muted);font-size:12px;line-height:1.6;margin-bottom:14px">Training is ~30% of the equation. The other 70% is recovery, sleep and nutrition.</p>
+    <div id="tips-list"></div>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════
+const PLAN = {
+  schedule: [
+    {
+      day:"Day A", label:"Push + Core", subtitle:"Mon", color:"#38bdf8",
+      focus:"Chest · Shoulders · Triceps · Core",
+      warmup:"2 min march in place + 10 arm circles each direction",
+      circuits:[
+        { round:"Circuit 1", sets:"3 rounds · 30s rest", exercises:[
+          { name:"Wall Push-Ups", target:"Wk 1–2: 10 / Wk 3–4: 12 / Wk 5–8: 15", cue:"Lean at 45°. Easier on joints than floor push-ups." },
+          { name:"Shoulder Taps (Plank)", target:"10 each side", cue:"High plank. Tap opposite shoulder. Keep hips still." },
+          { name:"Standing Oblique Crunch", target:"12 each side", cue:"Elbow to knee — slow and controlled." },
+        ]},
+        { round:"Circuit 2", sets:"3 rounds · 30s rest", exercises:[
+          { name:"Pike Push-Ups", target:"Wk 1–2: 6 / Wk 3–4: 8 / Wk 5–8: 10", cue:"Hips high. Lower head toward floor. Targets shoulders." },
+          { name:"Tricep Dips (Chair)", target:"8–12 reps", cue:"Hands on chair edge. Bend elbows 90°, press up." },
+          { name:"Dead Bug", target:"6 each side", cue:"On back — lower opposite arm & leg slowly. Back flat." },
+        ]},
+      ],
+      cooldown:"Child's pose 30s · Chest stretch 30s · Deep breathing 1 min"
+    },
+    {
+      day:"Day B", label:"Legs + Cardio", subtitle:"Wed", color:"#34d399",
+      focus:"Quads · Glutes · Hamstrings · Conditioning",
+      warmup:"2 min light squats + 10 leg swings each side",
+      circuits:[
+        { round:"Circuit 1", sets:"3 rounds · 40s rest", exercises:[
+          { name:"Bodyweight Squat", target:"Wk 1–2: 12 / Wk 3–4: 15 / Wk 5–8: 20", cue:"Feet shoulder-width. Sit back. Chest up." },
+          { name:"Reverse Lunge", target:"8 each leg", cue:"Step back, lower knee toward floor." },
+          { name:"Glute Bridge", target:"15 reps · 2s hold", cue:"Lying on back. Drive hips up. Squeeze at top." },
+        ]},
+        { round:"Circuit 2 — Cardio", sets:"3 rounds · 20s rest", exercises:[
+          { name:"Step Touch Side-to-Side", target:"30 seconds", cue:"Low-impact. Step wide each side." },
+          { name:"March in Place (High Knees)", target:"30 seconds", cue:"Drive knees to hip height. Pump arms." },
+          { name:"Wall Sit", target:"Wk 1–2: 20s / Wk 3–4: 30s / Wk 5–8: 45s", cue:"Back flat on wall, thighs parallel. Burn through it." },
+        ]},
+      ],
+      cooldown:"Hamstring stretch 30s each · Quad stretch 30s each · Hip flexor 30s each"
+    },
+    {
+      day:"Day C", label:"Pull + Full Body", subtitle:"Fri", color:"#818cf8",
+      focus:"Back · Core · Full body conditioning",
+      warmup:"2 min torso rotations + 10 cat-cow stretches",
+      circuits:[
+        { round:"Circuit 1", sets:"3 rounds · 30s rest", exercises:[
+          { name:"Superman Hold", target:"10 reps · 3s hold each", cue:"Face down. Lift chest and legs. Squeeze back." },
+          { name:"Table Row", target:"Wk 1–2: 8 / Wk 3–4: 10 / Wk 5–8: 12", cue:"Hold table underside. Lean back, pull chest to it." },
+          { name:"Reverse Snow Angel", target:"10 reps", cue:"Face down. Sweep arms wide and overhead." },
+        ]},
+        { round:"Circuit 2 — Finisher", sets:"3 rounds · 30s rest", exercises:[
+          { name:"Inchworm", target:"6 reps", cue:"Stand → fold → walk to plank → walk back → stand." },
+          { name:"Squat to Calf Raise", target:"12 reps", cue:"Squat, stand, rise onto toes. Legs + calves." },
+          { name:"Plank Hold", target:"Wk 1–2: 20s / Wk 3–4: 30s / Wk 5–8: 45s", cue:"Elbows under shoulders. Body straight. Breathe." },
+        ]},
+      ],
+      cooldown:"Hip flexors 30s each · Chest opener 30s · Upper back 30s · Shoulder 30s each"
+    }
+  ],
+  progression:[
+    { phase:"Phase 1", weeks:"Weeks 1–2", focus:"Form & Habit", color:"#38bdf8", desc:"Go slow. Nail technique on every rep. Rest 40s between rounds. Just showing up is the win." },
+    { phase:"Phase 2", weeks:"Weeks 3–4", focus:"Building Volume", color:"#818cf8", desc:"Add 2–3 reps per exercise. Reduce rest to 30s. Your body has adapted — push the ceiling." },
+    { phase:"Phase 3", weeks:"Weeks 5–6", focus:"Intensity Up", color:"#fb923c", desc:"Hit upper rep targets. Add a 4th round where you can. Drop rest to 20s on cardio." },
+    { phase:"Phase 4", weeks:"Weeks 7–8", focus:"Peak & Reassess", color:"#34d399", desc:"Max reps, minimal rest. Ready to progress: full push-ups, jump squats, real pull-ups." },
+  ],
+  tips:[
+    { icon:"💧", title:"Hydration", text:"Drink 500ml water before each session. Dehydration kills performance and raises injury risk." },
+    { icon:"🥗", title:"Protein", text:"Protein with every meal — eggs, chicken, Greek yoghurt, legumes. Muscles need it to rebuild." },
+    { icon:"😴", title:"Sleep", text:"7–8 hours non-negotiable. More fat burns during deep sleep than during any workout." },
+    { icon:"🧠", title:"Consistency", text:"Missed a day? Get back next session. Consistency over perfection — always." },
+    { icon:"🪖", title:"Military Mindset", text:"Show up every time and improve 1% per session. At 36–45 your rest days ARE training days. Trust the 8 weeks." },
+  ]
+};
+
+// ══════════════════════════════════════════
+// STATE & STORAGE
+// ══════════════════════════════════════════
+const STORAGE_KEY = "bootcamp_v1";
+let state = { dayIdx:0, histDayIdx:0 };
+let log = {};
+
+function loadLog() {
+  try { log = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); } catch { log = {}; }
+}
+function saveLog() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
+}
+function getVal(date, dayName, exName, round) {
+  return log?.[date]?.[dayName]?.[exName]?.[round] ?? "";
+}
+function setVal(date, dayName, exName, round, val) {
+  if (!log[date]) log[date] = {};
+  if (!log[date][dayName]) log[date][dayName] = {};
+  if (!log[date][dayName][exName]) log[date][dayName][exName] = {};
+  log[date][dayName][exName][round] = val;
+  saveLog();
+  updateProgressBars();
+}
+function getToday() { return new Date().toISOString().slice(0,10); }
+
+function sessionProgress(dayName) {
+  const d = PLAN.schedule.find(x => x.day === dayName);
+  let total=0, done=0;
+  d.circuits.forEach(c => c.exercises.forEach(ex => {
+    [1,2,3].forEach(r => {
+      total++;
+      const v = getVal(getToday(), dayName, ex.name, `r${r}`);
+      if (v && v.trim()) done++;
+    });
+  }));
+  return { done, total, pct: total > 0 ? Math.round(done/total*100) : 0 };
+}
+
+// ══════════════════════════════════════════
+// TAB NAVIGATION
+// ══════════════════════════════════════════
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  const idx = ['plan','history','progression','tips'].indexOf(id);
+  document.querySelectorAll('nav button')[idx].classList.add('active');
+}
+
+// ══════════════════════════════════════════
+// RENDER PLAN TAB
+// ══════════════════════════════════════════
+function renderDayGrid() {
+  const grid = document.getElementById('day-grid');
+  grid.innerHTML = PLAN.schedule.map((d,i) => {
+    const { done, total, pct } = sessionProgress(d.day);
+    return `<button class="day-btn ${state.dayIdx===i?'active':''}" style="--dc:${d.color}" onclick="selectDay(${i})">
+      <div class="ds">${d.subtitle}</div>
+      <div class="dn" style="color:${d.color}">${d.day}</div>
+      <div class="dl">${d.label}</div>
+      ${done > 0 ? `
+        <div class="prog-bar-wrap"><div class="prog-bar" style="width:${pct}%;background:${d.color}"></div></div>
+        <div class="prog-label" style="color:${d.color}">${done}/${total}</div>
+      ` : ''}
+    </button>`;
+  }).join('');
+}
+
+function renderDayDetail() {
+  const d = PLAN.schedule[state.dayIdx];
+  const today = getToday();
+  let html = `
+    <div class="card day-card" style="border-color:${d.color}44">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+        <div>
+          <div style="color:${d.color};font-weight:800;font-size:17px">${d.day} — ${d.label}</div>
+          <div style="color:var(--muted);font-size:11px;margin-top:2px">${d.focus}</div>
+        </div>
+        <span class="badge" style="--bc:${d.color}">20–25 min</span>
+      </div>
+      <div class="info-bar"><span class="label" style="color:var(--warn)">🔆 WARM-UP:</span>${d.warmup}</div>`;
+
+  d.circuits.forEach((c,ci) => {
+    html += `<div class="circuit-hd">
+      <div class="circuit-tag" style="background:${d.color}">${c.round}</div>
+      <div class="circuit-sets">${c.sets}</div>
+    </div>`;
+    c.exercises.forEach((ex,ei) => {
+      html += `<div class="ex-card" style="--dc:${d.color}">
+        <div class="ex-head">
+          <div class="ex-num" style="background:${d.color}33;color:${d.color}">${ei+1}</div>
+          <div>
+            <div class="ex-name">${ex.name}</div>
+            <div class="ex-target" style="color:${d.color}">🎯 ${ex.target}</div>
+            <div class="ex-cue">💡 ${ex.cue}</div>
+          </div>
+        </div>
+        <div class="rounds-label">Log your reps / time today</div>
+        <div class="rounds">`;
+      [1,2,3].forEach(r => {
+        const val = getVal(today, d.day, ex.name, `r${r}`);
+        const filled = val && val.trim();
+        html += `<div class="round-col">
+          <div class="round-lbl" style="color:${filled?d.color:'var(--muted)'}">Rnd ${r}</div>
+          <input class="round-input ${filled?'filled':''}" type="text" inputmode="decimal"
+            placeholder="—" value="${val}"
+            style="--dc:${d.color}"
+            onchange="setVal('${today}','${d.day}','${ex.name}','r${r}',this.value);this.classList.toggle('filled',!!this.value.trim());this.parentElement.querySelector('.round-lbl').style.color=this.value.trim()?'${d.color}':'var(--muted)'"/>
+        </div>`;
+      });
+      html += `</div></div>`;
+    });
+  });
+
+  html += `<div class="info-bar" style="margin-top:12px"><span class="label" style="color:var(--b)">🧊 COOL-DOWN:</span>${d.cooldown}</div>
+    <button class="save-btn" id="save-btn" style="background:${d.color};color:#0a0f1e" onclick="saveSession()">💾 Save Session</button>
+  </div>`;
+
+  document.getElementById('day-detail').innerHTML = html;
+}
+
+function selectDay(i) {
+  state.dayIdx = i;
+  renderDayGrid();
+  renderDayDetail();
+}
+
+function updateProgressBars() {
+  renderDayGrid();
+}
+
+function saveSession() {
+  saveLog();
+  const btn = document.getElementById('save-btn');
+  const d = PLAN.schedule[state.dayIdx];
+  btn.textContent = "✅ Session Saved!";
+  btn.style.background = "#34d399";
+  setTimeout(() => {
+    btn.textContent = "💾 Save Session";
+    btn.style.background = d.color;
+  }, 2000);
+  renderDayGrid();
+}
+
+// ══════════════════════════════════════════
+// RENDER HISTORY TAB
+// ══════════════════════════════════════════
+function renderHistGrid() {
+  const grid = document.getElementById('hist-day-grid');
+  grid.innerHTML = PLAN.schedule.map((d,i) => `
+    <button class="day-btn ${state.histDayIdx===i?'active':''}" style="--dc:${d.color}" onclick="selectHistDay(${i})">
+      <div class="ds">${d.subtitle}</div>
+      <div class="dn" style="color:${d.color}">${d.day}</div>
+      <div class="dl">${d.label}</div>
+    </button>`).join('');
+}
+
+function renderHistContent() {
+  const d = PLAN.schedule[state.histDayIdx];
+  const entries = Object.entries(log)
+    .filter(([date, days]) => days[d.day])
+    .sort((a,b) => b[0].localeCompare(a[0]));
+
+  if (!entries.length) {
+    document.getElementById('hist-content').innerHTML = `
+      <div class="empty">No sessions logged for ${d.day} yet.<br><br>Complete a workout and hit 💾 Save Session!</div>`;
+    return;
+  }
+
+  let html = entries.map(([date, days]) => {
+    const dayData = days[d.day];
+    let exHtml = Object.entries(dayData).map(([exName, rounds]) => `
+      <div class="hist-ex">
+        <div class="hist-ex-name">${exName}</div>
+        <div class="hist-rounds">
+          ${[1,2,3].map(r => {
+            const v = rounds[`r${r}`] || '';
+            const filled = v && v.trim();
+            return `<div class="hist-round">
+              <div class="hist-rnd-lbl">Rnd ${r}</div>
+              <div class="hist-rnd-val" style="background:${filled?d.color+'22':'#1e2d45'};border-color:${filled?d.color:'var(--border)'};color:${filled?d.color:'var(--muted)'}">
+                ${v || '—'}
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`).join('');
+
+    return `<div class="hist-entry">
+      <div class="hist-date" style="color:${d.color}">📅 ${date}</div>
+      ${exHtml}
+    </div>`;
+  }).join('');
+
+  document.getElementById('hist-content').innerHTML = html;
+}
+
+function selectHistDay(i) {
+  state.histDayIdx = i;
+  renderHistGrid();
+  renderHistContent();
+}
+
+// ══════════════════════════════════════════
+// RENDER PROGRESSION TAB
+// ══════════════════════════════════════════
+function renderProgression() {
+  document.getElementById('phases').innerHTML = PLAN.progression.map(p => `
+    <div class="phase-card" style="border-left:4px solid ${p.color}">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+        <div><span style="color:${p.color};font-weight:800;font-size:15px">${p.phase}</span><span style="color:var(--muted);font-size:11px;margin-left:8px">${p.weeks}</span></div>
+        <span class="badge" style="--bc:${p.color}">${p.focus}</span>
+      </div>
+      <div style="font-size:12px;line-height:1.6">${p.desc}</div>
+    </div>`).join('');
+
+  const weekMap = {Mon:{label:"Day A",color:"#38bdf8"},Wed:{label:"Day B",color:"#34d399"},Fri:{label:"Day C",color:"#818cf8"}};
+  document.getElementById('week-grid').innerHTML = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(d => {
+    const w = weekMap[d];
+    return `<div class="week-cell" style="background:${w?w.color+'22':'var(--card)'};border-color:${w?w.color:'var(--border)'}">
+      <div class="wd" style="color:${w?w.color:'var(--muted)'}">${d}</div>
+      <div class="wl" style="color:${w?'var(--text)':'var(--muted)'}">${w?w.label:"Rest"}</div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════
+// RENDER TIPS TAB
+// ══════════════════════════════════════════
+function renderTips() {
+  document.getElementById('tips-list').innerHTML = PLAN.tips.map(t => `
+    <div class="tip-card">
+      <div class="tip-icon">${t.icon}</div>
+      <div><div class="tip-title">${t.title}</div><div class="tip-text">${t.text}</div></div>
+    </div>`).join('');
+}
+
+// ══════════════════════════════════════════
+// PWA INSTALL PROMPT
+// ══════════════════════════════════════════
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('install-banner').classList.add('show');
+});
+function installApp() {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  deferredPrompt.userChoice.then(() => { deferredPrompt = null; dismissBanner(); });
+}
+function dismissBanner() {
+  document.getElementById('install-banner').classList.remove('show');
+}
+
+// ══════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════
+loadLog();
+document.getElementById('today-label').textContent = getToday();
+renderDayGrid();
+renderDayDetail();
+renderHistGrid();
+renderHistContent();
+renderProgression();
+renderTips();
+</script>
+
+<!-- SERVICE WORKER REGISTRATION -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(r => console.log('SW registered'))
+      .catch(e => console.log('SW failed', e));
+  });
+}
+</script>
+</body>
+</html>
